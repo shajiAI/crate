@@ -306,8 +306,16 @@ public abstract class BlobStoreRepository extends AbstractLifecycleComponent imp
         }
     }
 
-    // for test purposes only
-    protected BlobStore getBlobStore() {
+
+    public ThreadPool threadPool() {
+        return threadPool;
+    }
+
+    /**
+     * Maintains single lazy instance of {@link BlobStore}.
+     * Public for testing.
+     */
+    public BlobStore getBlobStore() {
         return blobStore.get();
     }
 

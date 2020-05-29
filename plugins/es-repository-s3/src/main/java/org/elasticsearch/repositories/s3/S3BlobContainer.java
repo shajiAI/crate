@@ -25,6 +25,7 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PartETag;
@@ -35,6 +36,7 @@ import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
 import org.apache.lucene.util.SetOnce;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.blobstore.BlobContainer;
 import org.elasticsearch.common.blobstore.BlobMetaData;
 import org.elasticsearch.common.blobstore.BlobPath;
 import org.elasticsearch.common.blobstore.BlobStoreException;
@@ -48,6 +50,7 @@ import java.io.InputStream;
 import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -241,6 +244,52 @@ class S3BlobContainer extends AbstractBlobContainer {
             clientReference.client().putObject(putRequest);
         } catch (final AmazonClientException e) {
             throw new IOException("Unable to upload object [" + blobName + "] using a single upload", e);
+        }
+    }
+
+    @Override
+    public Map<String, BlobContainer> children() throws IOException {
+        try (AmazonS3Reference clientReference = blobStore.clientReference()) {
+            ObjectListing prevListing = null;
+            final var result = new LinkedHashMap<String, BlobContainer>();
+            while (true) {
+                ObjectListing list;
+                if (prevListing != null) {
+                    final ObjectListing finalPrevListing = prevListing;
+                    list = clientReference.client().listNextBatchOfObjects(finalPrevListing);
+                } else {
+                    final ListObjectsRequest listObjectsRequest = new ListObjectsRequest();
+                    listObjectsRequest.setBucketName(blobStore.bucket());
+                    listObjectsRequest.setPrefix(keyPath);
+                    listObjectsRequest.setDelimiter("/");
+                    list = clientReference.client().listObjects(listObjectsRequest);
+                }
+                for (final String summary : list.getCommonPrefixes()) {
+                    final String name = summary.substring(keyPath.length());
+                    if (name.isEmpty() == false) {
+                        // Stripping the trailing slash off of the common prefix
+                        final String last = name.substring(0, name.length() - 1);
+                        final BlobPath path = path().add(last);
+                        result.put(last, blobStore.blobContainer(path));
+                    }
+                }
+                assert list.getObjectSummaries().stream().noneMatch(s -> {
+                    for (String commonPrefix : list.getCommonPrefixes()) {
+                        if (s.getKey().substring(keyPath.length()).startsWith(commonPrefix)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }) : "Response contained children for listed common prefixes.";
+                if (list.isTruncated()) {
+                    prevListing = list;
+                } else {
+                    break;
+                }
+            }
+            return result;
+        } catch (final AmazonClientException e) {
+            throw new IOException("Exception when listing children of [" +  path().buildAsString() + ']', e);
         }
     }
 

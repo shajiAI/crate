@@ -116,7 +116,7 @@ public class URLRepository extends BlobStoreRepository {
 
     // only use for testing
     @Override
-    protected BlobStore getBlobStore() {
+    public BlobStore getBlobStore() {
         return super.getBlobStore();
     }
 
