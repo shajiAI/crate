@@ -67,7 +67,7 @@ public class AzureStorageService {
 
     public static final ByteSizeValue MIN_CHUNK_SIZE = new ByteSizeValue(1, ByteSizeUnit.BYTES);
     /**
-     * {@link com.microsoft.azure.storage.blob.BlobConstants#MAX_SINGLE_UPLOAD_BLOB_SIZE_IN_BYTES}
+     * {@link com.microsoft.azure.storage.blob. BlobConstants#MAX_SINGLE_UPLOAD_BLOB_SIZE_IN_BYTES}
      */
     public static final ByteSizeValue MAX_CHUNK_SIZE = new ByteSizeValue(256, ByteSizeUnit.MB);
 
@@ -244,7 +244,7 @@ public class AzureStorageService {
 
     public Set<String> children(String account, String container, BlobPath path) throws URISyntaxException, StorageException {
         final var blobsBuilder = new HashSet<String>();
-        final Tuple<CloudBlobClient, Supplier<OperationContext>> client = client(account);
+        final Tuple<CloudBlobClient, Supplier<OperationContext>> client = client();
         final CloudBlobContainer blobContainer = client.v1().getContainerReference(container);
         final String keyPath = path.buildAsString();
         final EnumSet<BlobListingDetails> enumBlobListingDetails = EnumSet.of(BlobListingDetails.METADATA);
@@ -259,7 +259,7 @@ public class AzureStorageService {
                 final String uriPath = uri.getPath();
                 blobsBuilder.add(uriPath.substring(1 + container.length() + 1 + keyPath.length(), uriPath.length() - 1));
             }
-        };
+        }
         return Set.copyOf(blobsBuilder);
     }
 }
