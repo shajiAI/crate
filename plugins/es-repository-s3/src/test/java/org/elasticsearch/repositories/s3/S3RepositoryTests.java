@@ -43,7 +43,7 @@ public class S3RepositoryTests extends ESTestCase {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    private static class DummyS3Client extends AbstractAmazonS3 {
+    public static class DummyS3Client extends AbstractAmazonS3 {
 
         @Override
         public void shutdown() {
@@ -51,7 +51,7 @@ public class S3RepositoryTests extends ESTestCase {
         }
     }
 
-    private static class DummyS3Service extends S3Service {
+    public static class DummyS3Service extends S3Service {
         @Override
         public AmazonS3Reference client(RepositoryMetaData metadata) {
             return new AmazonS3Reference(new DummyS3Client());

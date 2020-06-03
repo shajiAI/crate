@@ -67,7 +67,7 @@ public class AzureStorageService {
 
     public static final ByteSizeValue MIN_CHUNK_SIZE = new ByteSizeValue(1, ByteSizeUnit.BYTES);
     /**
-     * {@link com.microsoft.azure.storage.blob. BlobConstants#MAX_SINGLE_UPLOAD_BLOB_SIZE_IN_BYTES}
+     * {@link com.microsoft.azure.storage.blob.BlobConstants#MAX_SINGLE_UPLOAD_BLOB_SIZE_IN_BYTES}
      */
     public static final ByteSizeValue MAX_CHUNK_SIZE = new ByteSizeValue(256, ByteSizeUnit.MB);
 
