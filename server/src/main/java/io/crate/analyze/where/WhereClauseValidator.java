@@ -27,8 +27,10 @@ import com.google.common.collect.ImmutableSet;
 import io.crate.exceptions.VersioninigValidationException;
 import io.crate.expression.operator.EqOperator;
 import io.crate.expression.operator.GteOperator;
+import io.crate.expression.operator.Operator;
 import io.crate.expression.operator.any.AnyOperators;
 import io.crate.expression.predicate.NotPredicate;
+import io.crate.expression.scalar.cast.CastFunction;
 import io.crate.expression.symbol.Function;
 import io.crate.expression.symbol.ScopedSymbol;
 import io.crate.expression.symbol.Symbol;
@@ -121,6 +123,23 @@ public final class WhereClauseValidator {
             return false;
         }
 
+        private static boolean insideCastComparedWithLiteral(Context context, Set<String> requiredFunctionNames) {
+            var numFunctions = context.functions.size();
+            if (numFunctions < 2) {
+                return false;
+            }
+            var lastFunction = context.functions.get(numFunctions - 1);
+            var parentFunction = context.functions.get(numFunctions - 2);
+
+            if (lastFunction.info().ident().name().equals(CastFunction.CAST_NAME)
+                && parentFunction.info().ident().name().startsWith(Operator.PREFIX)
+                && requiredFunctionNames.contains(parentFunction.info().ident().name())) {
+                var rightArg = parentFunction.arguments().get(1);
+                return rightArg.symbolType().isValueSymbol();
+            }
+            return false;
+        }
+
         private void validateSysReference(Context context, String columnName) {
             if (columnName.equalsIgnoreCase(VERSION)) {
                 validateSysReference(context, VERSIONING_ALLOWED_COMPARISONS, VersioninigValidationException::versionInvalidUsage);
@@ -138,7 +157,8 @@ public final class WhereClauseValidator {
                 throw error.get();
             }
             Function function = context.functions.lastElement();
-            if (!requiredFunctionNames.contains(function.info().ident().name().toLowerCase(Locale.ENGLISH))
+            if ((!insideCastComparedWithLiteral(context, requiredFunctionNames)
+                && !requiredFunctionNames.contains(function.info().ident().name().toLowerCase(Locale.ENGLISH)))
                 || insideNotPredicate(context)) {
                 throw error.get();
             }

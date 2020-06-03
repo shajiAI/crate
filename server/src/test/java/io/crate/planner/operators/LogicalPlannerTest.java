@@ -169,7 +169,7 @@ public class LogicalPlannerTest extends CrateDummyClusterServiceUnitTest {
         LogicalPlan plan = plan("select min(a), min(x) from t1 having min(x) < 33 and max(x) > 100");
         assertThat(plan, isPlan(
             "Eval[min(a), min(x)]\n" +
-            "  └ Filter[((min(x) < 33) AND (max(x) > 100))]\n" +
+            "  └ Filter[((cast(min(x) AS bigint) < 33) AND (cast(max(x) AS bigint) > 100))]\n" +
             "    └ HashAggregate[min(a), min(x), max(x)]\n" +
             "      └ Collect[doc.t1 | [a, x] | true]"
         ));
@@ -180,7 +180,7 @@ public class LogicalPlannerTest extends CrateDummyClusterServiceUnitTest {
         LogicalPlan plan = plan("select min(a), min(x) from t1 as tt having min(tt.x) < 33 and max(tt.x) > 100");
         assertThat(plan, isPlan(
             "Eval[min(a), min(x)]\n" +
-            "  └ Filter[((min(x) < 33) AND (max(x) > 100))]\n" +
+            "  └ Filter[((cast(min(x) AS bigint) < 33) AND (cast(max(x) AS bigint) > 100))]\n" +
             "    └ HashAggregate[min(a), min(x), max(x)]\n" +
             "      └ Rename[a, x] AS tt\n" +
             "        └ Collect[doc.t1 | [a, x] | true]"));
@@ -189,7 +189,7 @@ public class LogicalPlannerTest extends CrateDummyClusterServiceUnitTest {
     @Test
     public void testSelectCountStarIsOptimized() throws Exception {
         LogicalPlan plan = plan("select count(*) from t1 where x > 10");
-        assertThat(plan, isPlan("Count[doc.t1 | (x > 10)]"));
+        assertThat(plan, isPlan("Count[doc.t1 | (cast(x AS bigint) > 10)]"));
     }
 
     @Test
@@ -197,12 +197,13 @@ public class LogicalPlannerTest extends CrateDummyClusterServiceUnitTest {
         LogicalPlan plan = plan("SELECT COUNT(*), COUNT(x) FROM t1 WHERE x > 10");
         assertThat(plan, isPlan(
             "HashAggregate[count(*), count(x)]\n" +
-            "  └ Collect[doc.t1 | [x] | (x > 10)]"));
+            "  └ Collect[doc.t1 | [x] | (cast(x AS bigint) > 10)]"));
     }
 
     @Test
     public void testSelectCountStarIsOptimizedOnNestedSubqueries() throws Exception {
-        LogicalPlan plan = plan("select * from t1 where x > (select 1 from t1 where x > (select count(*) from t2 limit 1)::integer)");
+        LogicalPlan plan = plan(
+            "select * from t1 where x > (select 1 from t1 where x > (select count(*) from t2 limit 1)::integer)::integer");
         // instead of a Collect plan, this must result in a CountPlan through optimization
         assertThat(plan, isPlan(
             "MultiPhase\n" +
@@ -305,8 +306,8 @@ public class LogicalPlannerTest extends CrateDummyClusterServiceUnitTest {
         LogicalPlan plan = plan("select * from " +
                                 " (select a, i from t1 order by a limit 5) t1 " +
                                 "inner join" +
-                                " (select b, i from t2 where b > 10) t2 " +
-                                "on t1.i = t2.i where t1.a > 50 and t2.b > 100 " +
+                                " (select b, i from t2 where b > '10') t2 " +
+                                "on t1.i = t2.i where t1.a > '50' and t2.b > '100' " +
                                 "limit 10");
         assertThat(plan, isPlan(
             "Limit[10;0]\n" +

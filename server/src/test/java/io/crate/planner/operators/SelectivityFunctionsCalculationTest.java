@@ -22,14 +22,6 @@
 
 package io.crate.planner.operators;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import org.hamcrest.Matchers;
-import org.junit.Test;
-
 import io.crate.metadata.ColumnIdent;
 import io.crate.metadata.RelationName;
 import io.crate.statistics.ColumnStats;
@@ -38,6 +30,13 @@ import io.crate.statistics.TableStats;
 import io.crate.test.integration.CrateDummyClusterServiceUnitTest;
 import io.crate.testing.SQLExecutor;
 import io.crate.types.DataTypes;
+import org.hamcrest.Matchers;
+import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 
 public class SelectivityFunctionsCalculationTest extends CrateDummyClusterServiceUnitTest {
@@ -62,7 +61,7 @@ public class SelectivityFunctionsCalculationTest extends CrateDummyClusterServic
             .addTable("create table doc.tbl (x int)")
             .build();
 
-        LogicalPlan plan = e.logicalPlan("select * from doc.tbl where x = 10");
+        LogicalPlan plan = e.logicalPlan("select * from doc.tbl where x = 10::int");
         assertThat(plan.numExpectedRows(), Matchers.is(1L));
     }
 

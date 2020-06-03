@@ -157,7 +157,7 @@ public class PushDownTest extends CrateDummyClusterServiceUnitTest {
 
     @Test
     public void testFilterIsMovedBeneathOrder() {
-        LogicalPlan plan = plan("select * from (select * from t1 order by a) tt where a > 10");
+        LogicalPlan plan = plan("select * from (select * from t1 order by a) tt where a > '10'");
         assertThat(plan, isPlan(
             "Rename[a, x, i] AS tt\n" +
             "  └ OrderBy[a ASC]\n" +
@@ -236,7 +236,7 @@ public class PushDownTest extends CrateDummyClusterServiceUnitTest {
         var plan = sqlExecutor.logicalPlan(
             "SELECT * FROM " +
             "   (SELECT * FROM t1 INNER JOIN t2 on t1.x = t2.y) tjoin " +
-            "WHERE tjoin.x = 10 "
+            "WHERE tjoin.x = 10::int"
         );
         var expectedPlan =
             "Rename[a, x, i, b, y, i] AS tjoin\n" +
@@ -251,7 +251,7 @@ public class PushDownTest extends CrateDummyClusterServiceUnitTest {
         var plan = sqlExecutor.logicalPlan(
             "SELECT * FROM " +
             "   (SELECT * FROM t1, t2) tjoin " +
-            "WHERE tjoin.x = 10 "
+            "WHERE tjoin.x = 10::int"
         );
         var expectedPlan =
             "Rename[a, x, i, b, y, i] AS tjoin\n" +
@@ -267,7 +267,7 @@ public class PushDownTest extends CrateDummyClusterServiceUnitTest {
         var plan = sqlExecutor.logicalPlan(
             "SELECT * FROM " +
             "   (SELECT * FROM t1 INNER JOIN t2 on t1.x = t2.y) tjoin " +
-            "WHERE tjoin.x = 10 AND tjoin.y = 20 AND (tjoin.a || tjoin.b = '')"
+            "WHERE tjoin.x = 10::int AND tjoin.y = 20::int AND (tjoin.a || tjoin.b = '')"
         );
         var expectedPlan =
             "Rename[a, x, i, b, y, i] AS tjoin\n" +
@@ -305,7 +305,7 @@ public class PushDownTest extends CrateDummyClusterServiceUnitTest {
             "  * " +
             "FROM " +
             "  (SELECT x, generate_series(1, x) FROM t1) tt " +
-            "WHERE x > 1"
+            "WHERE x > 1::int"
         );
         var expectedPlan =
             "Rename[x, \"generate_series(1, x)\"] AS tt\n" +
@@ -322,7 +322,7 @@ public class PushDownTest extends CrateDummyClusterServiceUnitTest {
             "  * " +
             "FROM " +
             "  (SELECT x, generate_series(1, x) AS y FROM t1) tt " +
-            "WHERE x > 1 AND y > 2"
+            "WHERE x > 1::int AND y > 2::int"
         );
         var expectedPlan =
             "Rename[x, y] AS tt\n" +
@@ -336,7 +336,7 @@ public class PushDownTest extends CrateDummyClusterServiceUnitTest {
     @Test
     public void testFilterIsPushedBeneathGroupIfOnGroupKeys() {
         var plan = sqlExecutor.logicalPlan(
-            "SELECT x, count(*) FROM t1 GROUP BY 1 HAVING x > 1"
+            "SELECT x, count(*) FROM t1 GROUP BY 1 HAVING x > 1::int"
         );
         var expectedPlan =
             "GroupHashAggregate[x | count(*)]\n" +
@@ -347,7 +347,7 @@ public class PushDownTest extends CrateDummyClusterServiceUnitTest {
     @Test
     public void testFilterOnGroupKeyAndOnAggregateIsPartiallyPushedBeneathGroupBy() {
         var plan = sqlExecutor.logicalPlan(
-            "SELECT x, count(*) FROM t1 GROUP BY 1 HAVING count(*) > 10 AND x > 1"
+            "SELECT x, count(*) FROM t1 GROUP BY 1 HAVING count(*) > 10 AND x > 1::int"
         );
         var expectedPlan =
             "Filter[(count(*) > 10)]\n" +
@@ -361,7 +361,7 @@ public class PushDownTest extends CrateDummyClusterServiceUnitTest {
         var plan = sqlExecutor.logicalPlan(
             "SELECT * FROM " +
             "   (SELECT x, sum(x) over (partition by x) FROM t1) sums " +
-            "WHERE sums.x = 10 "
+            "WHERE sums.x = 10::int "
         );
         var expectedPlan =
             "Rename[x, \"sum(x) OVER (PARTITION BY x)\"] AS sums\n" +
@@ -372,7 +372,7 @@ public class PushDownTest extends CrateDummyClusterServiceUnitTest {
 
     @Test
     public void test_count_start_aggregate_filter_is_pushed_down() {
-        var plan = plan("SELECT COUNT(*) FILTER (WHERE x > 1) FROM t1");
+        var plan = plan("SELECT COUNT(*) FILTER (WHERE x > 1::int) FROM t1");
         var expectedPlan = "Count[doc.t1 | (x > 1)]";
         assertThat(plan, isPlan(expectedPlan));
     }
@@ -380,9 +380,9 @@ public class PushDownTest extends CrateDummyClusterServiceUnitTest {
     @Test
     public void test_count_start_aggregate_filter_is_merged_with_where_clause_query() {
         var plan = plan(
-            "SELECT COUNT(*) FILTER (WHERE x > 1) " +
+            "SELECT COUNT(*) FILTER (WHERE x > 1::int) " +
             "FROM t1 " +
-            "WHERE x > 10");
+            "WHERE x > 10::int");
         var expectedPlan = "Count[doc.t1 | ((x > 10) AND (x > 1))]";
         assertThat(plan, isPlan(expectedPlan));
     }

@@ -20,45 +20,28 @@
  * agreement.
  */
 
-package io.crate.lucene;
+package io.crate.lucene.optimizer;
 
-import io.crate.expression.symbol.Function;
-import io.crate.expression.symbol.Literal;
 import io.crate.expression.symbol.Symbol;
-import io.crate.metadata.Reference;
+import io.crate.metadata.Functions;
+import io.crate.planner.optimizer.matcher.Captures;
+import io.crate.planner.optimizer.matcher.Pattern;
+import org.elasticsearch.Version;
 
-import javax.annotation.Nullable;
-import java.util.List;
+public interface Rule<T> {
 
-public final class RefAndLiteral {
+    Pattern<T> pattern();
 
-    private final Reference ref;
-    private final Literal<?> literal;
+    boolean isEnabled();
 
-    @Nullable
-    public static RefAndLiteral of(Function function) {
-        List<Symbol> args = function.arguments();
-        assert args.size() == 2 : "Function must have 2 arguments";
+    void setEnabled(boolean enabled);
 
-        Symbol fst = args.get(0);
-        Symbol snd = args.get(1);
-        if (fst instanceof Reference && snd instanceof Literal) {
-            return new RefAndLiteral((Reference) fst, (Literal<?>) snd);
-        } else {
-            return null;
-        }
-    }
+    Symbol apply(T symbol, Captures captures, Functions functions);
 
-    private RefAndLiteral(Reference ref, Literal<?> literal) {
-        this.ref = ref;
-        this.literal = literal;
-    }
-
-    public Reference reference() {
-        return ref;
-    }
-
-    public Literal<?> literal() {
-        return literal;
+    /**
+     * @return The version all nodes in the cluster must have to be able to use this optimization.
+     */
+    default Version requiredVersion() {
+        return Version.V_4_0_0;
     }
 }

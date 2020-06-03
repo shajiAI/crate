@@ -33,9 +33,7 @@ import io.crate.analyze.relations.FullQualifiedNameFieldProvider;
 import io.crate.analyze.relations.ParentRelations;
 import io.crate.analyze.relations.TableRelation;
 import io.crate.auth.user.User;
-import io.crate.exceptions.ConversionException;
 import io.crate.expression.operator.EqOperator;
-import io.crate.expression.operator.GtOperator;
 import io.crate.expression.operator.LikeOperators;
 import io.crate.expression.operator.LtOperator;
 import io.crate.expression.operator.any.AnyOperators;
@@ -219,7 +217,7 @@ public class ExpressionAnalyzerTest extends CrateDummyClusterServiceUnitTest {
             null
         );
         Function andFunction = (Function) expressionAnalyzer.convert(
-            SqlParser.createExpression("not a1.x = 1 and not a2.x = 1"), context);
+            SqlParser.createExpression("not a1.x = 1::int and not a2.x = 1::int"), context);
 
         ScopedSymbol t1Id = ((ScopedSymbol) ((Function) ((Function) andFunction.arguments().get(0)).arguments().get(0)).arguments().get(0));
         ScopedSymbol t2Id = ((ScopedSymbol) ((Function) ((Function) andFunction.arguments().get(1)).arguments().get(0)).arguments().get(0));
@@ -228,7 +226,7 @@ public class ExpressionAnalyzerTest extends CrateDummyClusterServiceUnitTest {
 
     @Test
     public void testSwapFunctionLeftSide() throws Exception {
-        Function cmp = (Function) expressions.normalize(executor.asSymbol("8 + 5 > t1.x"));
+        Function cmp = (Function) expressions.normalize(executor.asSymbol("8::int + 5::int > t1.x"));
         // the comparison was swapped so the field is on the left side
         assertThat(cmp.info().ident().name(), is("op_<"));
         assertThat(cmp.arguments().get(0), isReference("x"));
@@ -308,22 +306,14 @@ public class ExpressionAnalyzerTest extends CrateDummyClusterServiceUnitTest {
     }
 
     @Test
-    public void testColumnsCannotBeCastedToLiteralType() {
+    public void testColumnsAreCastedToLiteralType() {
         Function symbol = (Function) executor.asSymbol("doc.t2.i = 1.1");
-        assertThat(symbol.arguments().get(0), isReference("i"));
-        assertThat(symbol.arguments().get(0).valueType(), is(DataTypes.INTEGER));
-    }
-
-    @Test
-    public void testIncompatibleLiteralThrowsException() {
-        expectedException.expect(ConversionException.class);
-        expectedException.expectMessage("Cannot cast `2147483648` of type `bigint` to type `integer`");
-        executor.asSymbol("doc.t2.i = 1 + " + Integer.MAX_VALUE);
+        assertThat(symbol, isSQL("(cast(doc.t2.i AS double precision) = 1.1)"));
     }
 
     @Test
     public void testFunctionsCanBeCasted() {
-        Function symbol2 = (Function) executor.asSymbol("doc.t5.w = doc.t2.i + 1.2");
+        Function symbol2 = (Function) executor.asSymbol("doc.t5.w = doc.t2.i + 1::smallint");
         assertThat(symbol2, isFunction(EqOperator.NAME));
         assertThat(symbol2.arguments().get(0), isReference("w"));
         assertThat(
@@ -347,15 +337,6 @@ public class ExpressionAnalyzerTest extends CrateDummyClusterServiceUnitTest {
             )
         );
         assertThat(symbol.arguments().get(1).valueType(), is(DataTypes.LONG));
-    }
-
-    @Test
-    public void testLiteralIsCastedToColumnValue() {
-        Function symbol = (Function) executor.asSymbol("5::long < doc.t1.i");
-        assertThat(symbol, isFunction(GtOperator.NAME));
-        assertThat(symbol.arguments().get(0).valueType(), is(DataTypes.INTEGER));
-        assertThat(symbol.arguments().get(1).valueType(), is(DataTypes.INTEGER));
-        assertThat(symbol.arguments().get(1), isLiteral(5));
     }
 
     @Test

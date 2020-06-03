@@ -62,6 +62,7 @@ public abstract class LuceneQueryBuilderTest extends CrateDummyClusterServiceUni
             " y_array array(long)," +
             " o_array array(object as (xs array(integer)))," +
             " ts_array array(timestamp with time zone)," +
+            " text_array array(text)," +
             " shape geo_shape," +
             " point geo_point," +
             " ts timestamp with time zone," +

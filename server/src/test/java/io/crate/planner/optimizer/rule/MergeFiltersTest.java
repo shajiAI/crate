@@ -63,8 +63,8 @@ public class MergeFiltersTest extends CrateDummyClusterServiceUnitTest {
     @Test
     public void testMergeFiltersMatchesOnAFilterWithAnotherFilterAsChild() {
         Collect source = new Collect(false, tr1, Collections.emptyList(), WhereClause.MATCH_ALL, 100, 10);
-        Filter sourceFilter = new Filter(source, e.asSymbol("x > 10"));
-        Filter parentFilter = new Filter(sourceFilter, e.asSymbol("y > 10"));
+        Filter sourceFilter = new Filter(source, e.asSymbol("x > 10::int"));
+        Filter parentFilter = new Filter(sourceFilter, e.asSymbol("y > 10::int"));
 
         MergeFilters mergeFilters = new MergeFilters();
         Match<Filter> match = mergeFilters.pattern().accept(parentFilter, Captures.empty());

@@ -21,7 +21,9 @@
 
 package io.crate.lucene;
 
+import io.crate.analyze.expressions.ExpressionAnalyzer;
 import io.crate.data.Input;
+import io.crate.exceptions.ConversionException;
 import io.crate.exceptions.UnsupportedFeatureException;
 import io.crate.exceptions.VersioninigValidationException;
 import io.crate.execution.engine.collect.DocInputFactory;
@@ -57,6 +59,12 @@ import io.crate.expression.symbol.SymbolType;
 import io.crate.expression.symbol.SymbolVisitor;
 import io.crate.expression.symbol.Symbols;
 import io.crate.expression.symbol.format.Style;
+import io.crate.lucene.optimizer.Optimizer;
+import io.crate.lucene.optimizer.rule.MoveArrayLengthOnReferenceCastToLiteralCastInsideOperators;
+import io.crate.lucene.optimizer.rule.MoveReferenceCastToLiteralCastInsideOperators;
+import io.crate.lucene.optimizer.rule.MoveReferenceCastToLiteralCastOnAnyOperatorsWhenLeftIsReference;
+import io.crate.lucene.optimizer.rule.MoveReferenceCastToLiteralCastOnAnyOperatorsWhenRightIsReference;
+import io.crate.lucene.optimizer.rule.MoveSubscriptOnReferenceCastToLiteralCastInsideOperators;
 import io.crate.metadata.CoordinatorTxnCtx;
 import io.crate.metadata.DocReferences;
 import io.crate.metadata.Functions;
@@ -73,6 +81,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.ExceptionsHelper;
+import org.elasticsearch.Version;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.lucene.search.Queries;
@@ -89,6 +98,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static io.crate.expression.eval.NullEliminator.eliminateNullsIfPossible;
@@ -130,9 +140,31 @@ public class LuceneQueryBuilder {
             indexName,
             table.partitionedByColumns()
         );
+
         CoordinatorTxnCtx coordinatorTxnCtx = CoordinatorTxnCtx.systemTransactionContext();
+
+        BiFunction<String, List<Symbol>, Symbol> functionResolver =
+            (f, args) -> {
+                try {
+                    return ExpressionAnalyzer.allocateFunction(f, args, null, null, functions, coordinatorTxnCtx);
+                } catch (ConversionException e) {
+                    return null;
+                }
+            };
+        Optimizer optimizer = new Optimizer(
+            functions,
+            () -> Version.CURRENT,
+            List.of(
+                new MoveReferenceCastToLiteralCastInsideOperators(functionResolver),
+                new MoveReferenceCastToLiteralCastOnAnyOperatorsWhenRightIsReference(functionResolver),
+                new MoveReferenceCastToLiteralCastOnAnyOperatorsWhenLeftIsReference(functionResolver),
+                new MoveSubscriptOnReferenceCastToLiteralCastInsideOperators(functionResolver),
+                new MoveArrayLengthOnReferenceCastToLiteralCastInsideOperators(functionResolver)
+            )
+        );
+
         ctx.query = eliminateNullsIfPossible(
-            inverseSourceLookup(normalizer.normalize(query, coordinatorTxnCtx)),
+            inverseSourceLookup(normalizer.normalize(optimizer.optimize(query), coordinatorTxnCtx)),
             s -> normalizer.normalize(s, coordinatorTxnCtx)
         ).accept(VISITOR, ctx);
         if (LOGGER.isTraceEnabled()) {

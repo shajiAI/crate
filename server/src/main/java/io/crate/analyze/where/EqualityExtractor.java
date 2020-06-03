@@ -411,6 +411,7 @@ public class EqualityExtractor {
             Symbol firstArg = arguments.get(0);
 
             if (functionName.equals(EqOperator.NAME)) {
+                firstArg = Symbols.unwrapReferenceFromCast(firstArg);
                 if (firstArg instanceof Reference && SymbolVisitors.any(Symbols.IS_COLUMN, arguments.get(1)) == false) {
                     Comparison comparison = context.comparisons.get(
                         ((Reference) firstArg).column());
@@ -421,6 +422,7 @@ public class EqualityExtractor {
                 }
             } else if (functionName.equals(AnyOperators.Names.EQ) && arguments.get(1).symbolType().isValueSymbol()) {
                 // ref = any ([1,2,3])
+                firstArg = Symbols.unwrapReferenceFromCast(firstArg);
                 if (firstArg instanceof Reference) {
                     Reference reference = (Reference) firstArg;
                     Comparison comparison = context.comparisons.get(reference.column());

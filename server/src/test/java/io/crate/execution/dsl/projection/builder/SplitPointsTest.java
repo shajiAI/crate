@@ -101,7 +101,7 @@ public class SplitPointsTest extends CrateDummyClusterServiceUnitTest {
 
     @Test
     public void test_split_points_creation_with_filter_in_aggregate_expression() {
-        QueriedSelectRelation relation = e.analyze("select sum(i) filter (where x > 1) from t1");
+        QueriedSelectRelation relation = e.analyze("select sum(i) filter (where x > 1::int) from t1");
 
         SplitPoints splitPoints = SplitPointsBuilder.create(relation);
 
@@ -114,7 +114,7 @@ public class SplitPointsTest extends CrateDummyClusterServiceUnitTest {
 
     @Test
     public void test_split_points_creation_with_filter_in_aggregate_fo_window_function_call() {
-        QueriedSelectRelation relation = e.analyze("select sum(i) filter (where x > 1) over(order by i) from t1");
+        QueriedSelectRelation relation = e.analyze("select sum(i) filter (where x > 1::int) over(order by i) from t1");
 
         SplitPoints splitPoints = SplitPointsBuilder.create(relation);
 

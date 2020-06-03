@@ -52,7 +52,7 @@ import java.util.Set;
  *
  * This query is very slow.
  */
-class GenericFunctionQuery extends Query {
+public class GenericFunctionQuery extends Query {
 
     private final Function function;
     private final LuceneCollectorExpression[] expressions;

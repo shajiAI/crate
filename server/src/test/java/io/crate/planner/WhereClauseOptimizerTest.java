@@ -128,7 +128,7 @@ public class WhereClauseOptimizerTest extends CrateDummyClusterServiceUnitTest{
     public void testFilterOnClusteredByColumnDoesNotResultInDocKeysSimpleEq() {
         WhereClauseOptimizer.DetailedQuery query = optimize(
             "select * from clustered_by_only where x = 10");
-        assertThat(query.clusteredBy(), contains(isLiteral(10)));
+        assertThat(query.clusteredBy(), contains(isLiteral(10L)));
         assertThat(query.docKeys().isPresent(), is(false));
     }
 
@@ -136,7 +136,7 @@ public class WhereClauseOptimizerTest extends CrateDummyClusterServiceUnitTest{
     public void testFilterOnClusteredByColumnDoesNotResultInDocKeysSimpleEqOr() {
         WhereClauseOptimizer.DetailedQuery query = optimize(
             "select * from clustered_by_only where x = 10 or x = 20");
-        assertThat(query.clusteredBy(), containsInAnyOrder(isLiteral(10), isLiteral(20)));
+        assertThat(query.clusteredBy(), containsInAnyOrder(isLiteral(10L), isLiteral(20L)));
         assertThat(query.docKeys().isPresent(), is(false));
     }
 
@@ -144,7 +144,7 @@ public class WhereClauseOptimizerTest extends CrateDummyClusterServiceUnitTest{
     public void testFilterOnClusteredByColumnDoesNotResultInDocKeysIn() {
         WhereClauseOptimizer.DetailedQuery query = optimize(
             "select * from clustered_by_only where x in (10, 20)");
-        assertThat(query.clusteredBy(), containsInAnyOrder(isLiteral(10), isLiteral(20)));
+        assertThat(query.clusteredBy(), containsInAnyOrder(isLiteral(10L), isLiteral(20L)));
         assertThat(query.docKeys().isPresent(), is(false));
     }
 

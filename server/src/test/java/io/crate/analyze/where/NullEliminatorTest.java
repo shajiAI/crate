@@ -66,11 +66,11 @@ public class NullEliminatorTest extends CrateDummyClusterServiceUnitTest {
     public void testNullsReplaced() throws Exception {
         sqlExpressions.context().allowEagerNormalize(false);
         assertReplaced("null and x = null", "cast(NULL AS boolean) AND (x = cast(NULL AS integer))");
-        assertReplaced("null or x = 1 or null", "(cast(NULL AS boolean) OR (x = cast(1 AS integer))) OR cast(NULL AS boolean)");
-        assertReplaced("not(null and x = 1)", "NOT (cast(NULL AS boolean) AND (x = cast(1 AS integer)))");
-        assertReplaced("not(null or not(null and x = 1))", "NOT (cast(NULL AS boolean) OR (NOT (cast(NULL AS boolean) AND (x = cast(1 AS integer)))))");
-        assertReplaced("not(null and x = 1) and not(null or x = 2)", "(NOT (cast(NULL AS boolean) AND (x = cast(1 AS integer)))) AND (NOT (cast(NULL AS boolean) OR (x = cast(2 AS integer))))");
-        assertReplaced("null or coalesce(null or x = 1, true)", "cast(NULL AS boolean) OR coalesce((cast(NULL AS boolean) OR (x = cast(1 AS integer))), true)");
+        assertReplaced("null or x = 1::int or null", "(cast(NULL AS boolean) OR (x = cast(1 AS integer))) OR cast(NULL AS boolean)");
+        assertReplaced("not(null and x = 1::int)", "NOT (cast(NULL AS boolean) AND (x = cast(1 AS integer)))");
+        assertReplaced("not(null or not(null and x = 1::int))", "NOT (cast(NULL AS boolean) OR (NOT (cast(NULL AS boolean) AND (x = cast(1 AS integer)))))");
+        assertReplaced("not(null and x = 1::int) and not(null or x = 2::int)", "(NOT (cast(NULL AS boolean) AND (x = cast(1 AS integer)))) AND (NOT (cast(NULL AS boolean) OR (x = cast(2 AS integer))))");
+        assertReplaced("null or coalesce(null or x = 1::int, true)", "cast(NULL AS boolean) OR coalesce((cast(NULL AS boolean) OR (x = cast(1 AS integer))), true)");
     }
 
     @Test

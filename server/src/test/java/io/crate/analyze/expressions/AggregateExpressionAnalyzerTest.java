@@ -49,7 +49,7 @@ public class AggregateExpressionAnalyzerTest extends CrateDummyClusterServiceUni
 
     @Test
     public void test_aggregate_function_with_filter_expression_that_contains_fields() {
-        var symbol = e.asSymbol("count(*) filter (where t.x > 1)");
+        var symbol = e.asSymbol("count(*) filter (where t.x > 1::int)");
         assertThat(symbol, instanceOf(Function.class));
 
         var function = (Function) symbol;
@@ -58,7 +58,7 @@ public class AggregateExpressionAnalyzerTest extends CrateDummyClusterServiceUni
 
     @Test
     public void test_distinct_aggregate_function_with_filter_expression() {
-        var symbol = e.asSymbol("avg(distinct t.x) filter (where t.x < 1)");
+        var symbol = e.asSymbol("avg(distinct t.x) filter (where t.x < 1::int)");
         assertThat(symbol, instanceOf(Function.class));
 
         var outerFunc = (Function) symbol;
@@ -78,7 +78,7 @@ public class AggregateExpressionAnalyzerTest extends CrateDummyClusterServiceUni
 
     @Test
     public void test_aggregate_function_with_filter_expression_that_contains_subquery() {
-        var symbol = e.asSymbol("count(*) filter (where 1 in (select x from t))");
+        var symbol = e.asSymbol("count(*) filter (where 1::int in (select x from t))");
         assertThat(symbol, instanceOf(Function.class));
 
         var function = (Function) symbol;

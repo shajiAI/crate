@@ -27,7 +27,7 @@ public class SelectivityFunctionsTest extends CrateDummyClusterServiceUnitTest {
     @Test
     public void test_eq_not_in_mcv_is_based_on_approx_distinct() {
         SqlExpressions expressions = new SqlExpressions(T3.sources(clusterService));
-        Symbol query = expressions.asSymbol("x = 10");
+        Symbol query = expressions.asSymbol("x = 10::int");
         var statsByColumn = new HashMap<ColumnIdent, ColumnStats>();
         var numbers = IntStream.range(1, 20_001)
             .boxed()
@@ -86,7 +86,7 @@ public class SelectivityFunctionsTest extends CrateDummyClusterServiceUnitTest {
     @Test
     public void test_not_reverses_selectivity_of_inner_function() {
         SqlExpressions expressions = new SqlExpressions(T3.sources(clusterService));
-        Symbol query = expressions.asSymbol("NOT (x = 10)");
+        Symbol query = expressions.asSymbol("NOT (x = 10::int)");
         var numbers = IntStream.range(1, 20_001)
             .boxed()
             .collect(Collectors.toList());

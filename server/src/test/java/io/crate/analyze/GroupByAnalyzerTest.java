@@ -122,7 +122,7 @@ public class GroupByAnalyzerTest extends CrateDummyClusterServiceUnitTest {
     public void testGroupByScalarAliasedWithRealColumnNameFailsIfScalarColumnIsNotGrouped() {
         expectedException.expect(IllegalArgumentException.class);
         expectedException.expectMessage(
-            "'(1 / height)' must appear in the GROUP BY clause");
+            "'(1 / cast(height AS bigint))' must appear in the GROUP BY clause");
         analyze("select 1/height as age from foo.users group by age");
     }
 
@@ -364,7 +364,7 @@ public class GroupByAnalyzerTest extends CrateDummyClusterServiceUnitTest {
 
     @Test
     public void testGroupByHavingOtherColumnInAggregate() throws Exception {
-        QueriedSelectRelation relation = analyze("select sum(floats), name from users group by name having max(bytes) = 4");
+        QueriedSelectRelation relation = analyze("select sum(floats), name from users group by name having max(bytes) = 4::char");
         assertThat(relation.having(), isFunction("op_="));
         Function havingFunction = (Function) relation.having();
         assertThat(havingFunction.arguments().size(), is(2));

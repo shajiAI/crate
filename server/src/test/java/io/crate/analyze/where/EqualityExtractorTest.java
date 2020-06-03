@@ -105,9 +105,9 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         List<List<Symbol>> matches = analyzeExactXI(query);
         assertThat(matches.size(), is(3));
         assertThat(matches, containsInAnyOrder(
-            contains(isLiteral(1), isLiteral(2)),
-            contains(isLiteral(1), isLiteral(3)),
-            contains(isLiteral(1), isLiteral(4)))
+            contains(isLiteral(1L), isLiteral(2L)),
+            contains(isLiteral(1L), isLiteral(3L)),
+            contains(isLiteral(1L), isLiteral(4L)))
         );
     }
 
@@ -118,8 +118,8 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         assertThat(matches.size(), is(2));
 
         assertThat(matches, containsInAnyOrder(
-            contains(isLiteral(1), isLiteral(2)),
-            contains(isLiteral(3), isLiteral(4))
+            contains(isLiteral(1L), isLiteral(2L)),
+            contains(isLiteral(3L), isLiteral(4L))
         ));
     }
 
@@ -129,8 +129,8 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         List<List<Symbol>> matches = analyzeExactXI(query);
         assertThat(matches.size(), is(2));
         assertThat(matches, containsInAnyOrder(
-            contains(isLiteral(1), isLiteral(2)),
-            contains(isLiteral(1), isLiteral(4))
+            contains(isLiteral(1L), isLiteral(2L)),
+            contains(isLiteral(1L), isLiteral(4L))
         ));
     }
 
@@ -142,7 +142,7 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         assertThat(matches.size(), is(1));
 
         assertThat(matches, contains(
-            contains(isLiteral(1))
+            contains(isLiteral(1L))
         ));
     }
 
@@ -159,8 +159,8 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         List<List<Symbol>> matches = analyzeParentX(query);
         assertThat(matches.size(), is(2));
         assertThat(matches, containsInAnyOrder(
-            contains(isLiteral(1)),
-            contains(isLiteral(2))
+            contains(isLiteral(1L)),
+            contains(isLiteral(2L))
         ));
     }
 
@@ -179,10 +179,10 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         assertThat(matches.size(), is(4));
 
         assertThat(matches, containsInAnyOrder(
-            contains(isLiteral(1)),
-            contains(isLiteral(2)),
-            contains(isLiteral(3)),
-            contains(isLiteral(4))
+            contains(isLiteral(1L)),
+            contains(isLiteral(2L)),
+            contains(isLiteral(3L)),
+            contains(isLiteral(4L))
         ));
     }
 
@@ -208,8 +208,8 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         assertThat(matches.size(), is(2));
 
         assertThat(matches, containsInAnyOrder(
-            contains(isLiteral(1), isLiteral(2)),
-            contains(isLiteral(1), isLiteral(4))
+            contains(isLiteral(1L), isLiteral(2L)),
+            contains(isLiteral(1L), isLiteral(4L))
         ));
     }
 
@@ -252,8 +252,8 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         List<List<Symbol>> matches = analyzeExactXI(query);
         assertThat(matches.size(), is(2));
         assertThat(matches, containsInAnyOrder(
-            contains(isLiteral(1), isLiteral(2)),
-            contains(isLiteral(1), isLiteral(3))
+            contains(isLiteral(1L), isLiteral(2L)),
+            contains(isLiteral(1L), isLiteral(3L))
         ));
     }
 
@@ -270,9 +270,9 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         List<List<Symbol>> matches = analyzeExactX(query);
         assertThat(matches.size(), is(3));
         assertThat(matches, containsInAnyOrder(
-            contains(isLiteral(1)),
-            contains(isLiteral(2)),
-            contains(isLiteral(3))
+            contains(isLiteral(1L)),
+            contains(isLiteral(2L)),
+            contains(isLiteral(3L))
         ));
     }
 
@@ -282,9 +282,9 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         List<List<Symbol>> matches = analyzeExactXI(query);
         assertThat(matches.size(), is(3));
         assertThat(matches, containsInAnyOrder(
-            contains(isLiteral(1), isLiteral(4)),
-            contains(isLiteral(2), isLiteral(4)),
-            contains(isLiteral(3), isLiteral(4))
+            contains(isLiteral(1L), isLiteral(4L)),
+            contains(isLiteral(2L), isLiteral(4L)),
+            contains(isLiteral(3L), isLiteral(4L))
         ));
 
 
@@ -296,11 +296,11 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         List<List<Symbol>> matches = analyzeExactX(query);
         assertThat(matches.size(), is(5));
         assertThat(matches, containsInAnyOrder(
-            contains(isLiteral(1)),
-            contains(isLiteral(2)),
-            contains(isLiteral(3)),
-            contains(isLiteral(4)),
-            contains(isLiteral(5))
+            contains(isLiteral(1L)),
+            contains(isLiteral(2L)),
+            contains(isLiteral(3L)),
+            contains(isLiteral(4L)),
+            contains(isLiteral(5L))
         ));
     }
 
@@ -310,7 +310,7 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         List<List<Symbol>> matches = analyzeExactX(query);
         assertThat(matches.size(), is(1));
         assertThat(matches, contains(
-            contains(isLiteral(1))
+            contains(isLiteral(1L))
         ));
     }
 
@@ -321,7 +321,7 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         assertThat(matches, is(notNullValue()));
         assertThat(matches.size(), is(1)); // 3
         assertThat(matches, contains(
-            contains(isLiteral(3))
+            contains(isLiteral(3L))
         ));
     }
 
@@ -331,15 +331,15 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
         List<List<Symbol>> matches = analyzeExactXI(query);
         assertThat(matches.size(), is(9)); // cartesian product: 3 * 3
         assertThat(matches, containsInAnyOrder(
-            contains(isLiteral(1), isLiteral(1)),
-            contains(isLiteral(1), isLiteral(2)),
-            contains(isLiteral(1), isLiteral(3)),
-            contains(isLiteral(2), isLiteral(1)),
-            contains(isLiteral(2), isLiteral(2)),
-            contains(isLiteral(2), isLiteral(3)),
-            contains(isLiteral(3), isLiteral(1)),
-            contains(isLiteral(3), isLiteral(2)),
-            contains(isLiteral(3), isLiteral(3))
+            contains(isLiteral(1L), isLiteral(1L)),
+            contains(isLiteral(1L), isLiteral(2L)),
+            contains(isLiteral(1L), isLiteral(3L)),
+            contains(isLiteral(2L), isLiteral(1L)),
+            contains(isLiteral(2L), isLiteral(2L)),
+            contains(isLiteral(2L), isLiteral(3L)),
+            contains(isLiteral(3L), isLiteral(1L)),
+            contains(isLiteral(3L), isLiteral(2L)),
+            contains(isLiteral(3L), isLiteral(3L))
         ));
     }
 
@@ -367,5 +367,15 @@ public class EqualityExtractorTest extends CrateDummyClusterServiceUnitTest {
     public void testNoPKExtractionWhenColumnsOnBothSidesOfEqual() {
         List<List<Symbol>> matches = analyzeExactX(query("x = abs(x)"));
         assertThat(matches, nullValue());
+    }
+
+    @Test
+    public void testCast() throws Exception {
+        Symbol query = query("cast(x as bigint) = 0");
+        List<List<Symbol>> matches = analyzeExactX(query);
+        assertThat(matches.size(), is(1));
+        assertThat(matches, contains(
+            contains(isLiteral(0L))
+        ));
     }
 }

@@ -158,7 +158,7 @@ public class SelectStatementAnalyzerTest extends CrateDummyClusterServiceUnitTes
         QueriedSelectRelation relation =  analyze("select * from sys.nodes where port['http'] = -400");
         Function whereClause = (Function) relation.where();
         Symbol symbol = whereClause.arguments().get(1);
-        assertThat(((Literal) symbol).value(), is(-400));
+        assertThat(((Literal<?>) symbol).value(), is(-400L));
     }
 
     @Test
@@ -1561,7 +1561,7 @@ public class SelectStatementAnalyzerTest extends CrateDummyClusterServiceUnitTes
     public void testAnyRightLiteral() throws Exception {
         QueriedSelectRelation relation = analyze("select id from sys.shards where id = any ([1,2])");
         assertThat(relation.where(),
-                   isFunction("any_=", List.of(DataTypes.INTEGER, new ArrayType<>(DataTypes.INTEGER))));
+                   isFunction("any_=", List.of(DataTypes.LONG, new ArrayType<>(DataTypes.LONG))));
     }
 
     @Test

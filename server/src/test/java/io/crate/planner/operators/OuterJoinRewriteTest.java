@@ -47,7 +47,7 @@ public class OuterJoinRewriteTest extends CrateDummyClusterServiceUnitTest {
     public void testFilterAndOuterJoinIsRewrittenToInnerJoinIfFilterEliminatesNullRow() {
         var plan = sqlExecutor.logicalPlan(
             "SELECT * FROM t1 LEFT JOIN t2 ON t1.x = t2.x " +
-            "WHERE t2.x = 10"
+            "WHERE t2.x = '10'"
         );
         var expectedPlan =
             "NestedLoopJoin[INNER | (x = x)]\n" +
@@ -79,7 +79,7 @@ public class OuterJoinRewriteTest extends CrateDummyClusterServiceUnitTest {
         var expectedPlan =
             "Filter[(coalesce(cast(x AS bigint), 10) = 10)]\n" +
             "  └ NestedLoopJoin[LEFT | (x = x)]\n" +
-            "    ├ Collect[doc.t1 | [x] | (x > 5)]\n" +
+            "    ├ Collect[doc.t1 | [x] | (cast(x AS bigint) > 5)]\n" +
             "    └ Collect[doc.t2 | [x] | true]";
         assertThat(plan, isPlan(expectedPlan));
     }
@@ -88,7 +88,7 @@ public class OuterJoinRewriteTest extends CrateDummyClusterServiceUnitTest {
     public void testFilterOnRightOuterJoinIsPartiallyPushedDownToTheRightSide() {
         var plan = sqlExecutor.logicalPlan(
             "SELECT * FROM t1 RIGHT JOIN t2 ON t1.x = t2.x " +
-            "WHERE coalesce(t1.x, 10) = 10 AND t2.x > 5"
+            "WHERE coalesce(t1.x, 10) = 10 AND t2.x > 5::int"
         );
         var expectedPlan =
             "Filter[(coalesce(cast(x AS bigint), 10) = 10)]\n" +
@@ -102,7 +102,7 @@ public class OuterJoinRewriteTest extends CrateDummyClusterServiceUnitTest {
     public void testFilterOnFullOuterJoinIsPartiallyPushedDownToTheRightSide() {
         var plan = sqlExecutor.logicalPlan(
             "SELECT * FROM t1 FULL OUTER JOIN t2 ON t1.x = t2.x " +
-            "WHERE coalesce(t1.x, 10) = 10 AND t2.x > 5"
+            "WHERE coalesce(t1.x, 10) = 10 AND t2.x > 5::int"
         );
         var expectedPlan =
             "Filter[((coalesce(cast(x AS bigint), 10) = 10) AND (x > 5))]\n" +

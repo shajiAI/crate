@@ -22,6 +22,7 @@
 
 package io.crate.planner.optimizer.matcher;
 
+import io.crate.expression.symbol.Symbol;
 import io.crate.planner.operators.LogicalPlan;
 
 import java.util.Optional;

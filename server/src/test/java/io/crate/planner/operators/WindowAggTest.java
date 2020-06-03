@@ -67,7 +67,7 @@ public class WindowAggTest extends CrateDummyClusterServiceUnitTest {
 
     @Test
     public void test_window_agg_output_for_select_with_standalone_ref_and_window_func_with_filter() {
-        var plan = plan("SELECT y, AVG(x) FILTER (WHERE x > 1) OVER() FROM t1");
+        var plan = plan("SELECT y, AVG(x) FILTER (WHERE x > 1::int) OVER() FROM t1");
         var expectedPlan =
             "Eval[y, avg(x) FILTER (WHERE (x > 1)) OVER ()]\n" +
             "  └ WindowAgg[x, (x > 1), y, avg(x) FILTER (WHERE (x > 1)) OVER ()]\n" +
@@ -77,7 +77,7 @@ public class WindowAggTest extends CrateDummyClusterServiceUnitTest {
 
     @Test
     public void test_window_agg_with_filter_that_contains_column_that_is_not_in_outputs() {
-        var plan = plan("SELECT x, COUNT(*) FILTER (WHERE y > 1) OVER() FROM t1");
+        var plan = plan("SELECT x, COUNT(*) FILTER (WHERE y > 1::int) OVER() FROM t1");
         var expectedPlan =
             "Eval[x, count(*) FILTER (WHERE (y > 1)) OVER ()]\n" +
             "  └ WindowAgg[(y > 1), x, count(*) FILTER (WHERE (y > 1)) OVER ()]\n" +

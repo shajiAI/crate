@@ -23,6 +23,7 @@ package io.crate.expression.symbol;
 
 import io.crate.Streamer;
 import io.crate.common.collections.LazyMapList;
+import io.crate.expression.scalar.cast.CastFunction;
 import io.crate.expression.symbol.format.Style;
 import io.crate.metadata.ColumnIdent;
 import io.crate.metadata.GeneratedReference;
@@ -168,6 +169,14 @@ public class Symbols {
             }
         }
         return String.format(Locale.ENGLISH, messageTmpl, formattedSymbols);
+    }
+
+    public static Symbol unwrapReferenceFromCast(Symbol symbol) {
+        if (symbol instanceof Function
+            && ((Function) symbol).info().ident().name().equals(CastFunction.CAST_NAME)) {
+            return  ((Function) symbol).arguments().get(0);
+        }
+        return symbol;
     }
 
     private static class HasColumnVisitor extends SymbolVisitor<ColumnIdent, Boolean> {

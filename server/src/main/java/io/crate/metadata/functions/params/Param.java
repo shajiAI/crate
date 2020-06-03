@@ -295,6 +295,10 @@ public final class Param {
         final DataType lowerPrecedenceType = lowerPrecedenceArg.valueType();
         final DataType higherPrecedenceType = higherPrecedenceArg.valueType();
 
+        final boolean lowerPrecedenceCastable = lowerPrecedenceType.isConvertableTo(higherPrecedenceType, false);
+        final boolean higherPrecedenceCastable = higherPrecedenceType.isConvertableTo(lowerPrecedenceType, false);
+
+        /*
         final boolean lowerPrecedenceCastable =
             lowerPrecedenceArg.canBeCasted() && lowerPrecedenceType.isConvertableTo(higherPrecedenceType, false) &&
             isTypeValid(higherPrecedenceType);
@@ -310,6 +314,8 @@ public final class Param {
         } else if (higherPrecedenceCastable && higherPrecedenceArg.isValueSymbol()) {
             return lowerPrecedenceArg;
         }
+
+         */
 
         if (lowerPrecedenceCastable) {
             return higherPrecedenceArg;
