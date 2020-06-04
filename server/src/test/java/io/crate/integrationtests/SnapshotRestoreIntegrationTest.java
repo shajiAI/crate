@@ -28,23 +28,15 @@ import io.crate.testing.SQLResponse;
 import io.crate.testing.TestingHelpers;
 import org.apache.lucene.util.SetOnce;
 import org.elasticsearch.action.ActionFuture;
-import org.elasticsearch.action.ActionRunnable;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse;
-import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.cluster.SnapshotsInProgress;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.blobstore.BlobMetaData;
-import org.elasticsearch.common.blobstore.BlobPath;
-import org.elasticsearch.common.blobstore.BlobStore;
-import org.elasticsearch.common.blobstore.support.PlainBlobMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import io.crate.common.unit.TimeValue;
 import org.elasticsearch.repositories.RepositoriesService;
 import org.elasticsearch.repositories.Repository;
 import org.elasticsearch.repositories.RepositoryData;
-import org.elasticsearch.repositories.blobstore.BlobStoreRepository;
 import org.elasticsearch.snapshots.Snapshot;
 import org.elasticsearch.snapshots.SnapshotId;
 import org.elasticsearch.snapshots.SnapshotInfo;
@@ -54,22 +46,14 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
@@ -588,88 +572,5 @@ public class SnapshotRestoreIntegrationTest extends SQLTransportIntegrationTest 
         });
         latch.await();
         return repositoryData.get();
-    }
-
-    public void testListChildren() throws Exception {
-        final BlobStoreRepository repo = getRepository();
-        final PlainActionFuture<Void> future = PlainActionFuture.newFuture();
-        final Executor genericExec = repo.threadPool().generic();
-        final int testBlobLen = randomIntBetween(1, 100);
-        genericExec.execute(new ActionRunnable<>(future) {
-            @Override
-            protected void doRun() throws Exception {
-                final BlobStore blobStore = repo.blobStore();
-                blobStore.blobContainer(repo.basePath().add("foo"))
-                    .writeBlob("nested-blob", new ByteArrayInputStream(randomByteArrayOfLength(testBlobLen)), testBlobLen, false);
-                blobStore.blobContainer(repo.basePath().add("foo").add("nested"))
-                    .writeBlob("bar", new ByteArrayInputStream(randomByteArrayOfLength(testBlobLen)), testBlobLen, false);
-                blobStore.blobContainer(repo.basePath().add("foo").add("nested2"))
-                    .writeBlob("blub", new ByteArrayInputStream(randomByteArrayOfLength(testBlobLen)), testBlobLen, false);
-                future.onResponse(null);
-            }
-        });
-        future.actionGet();
-        assertChildren(repo.basePath(), Collections.singleton("foo"));
-        assertBlobsByPrefix(repo.basePath(), "fo", Collections.emptyMap());
-        assertChildren(repo.basePath().add("foo"), List.of("nested", "nested2"));
-        assertBlobsByPrefix(repo.basePath().add("foo"), "nest",
-                            Collections.singletonMap("nested-blob", new PlainBlobMetaData("nested-blob", testBlobLen)));
-        assertChildren(repo.basePath().add("foo").add("nested"), Collections.emptyList());
-    }
-
-    protected void assertBlobsByPrefix(BlobPath path, String prefix, Map<String, BlobMetaData> blobs) throws Exception {
-        // AWS S3 is eventually consistent so we retry for 10 minutes assuming a list operation will never take longer than that
-        // to become consistent.
-        assertBusy(() -> assertBlobsByPrefix_(path, prefix, blobs), 10L, TimeUnit.MINUTES);
-    }
-
-    protected void assertChildren(BlobPath path, Collection<String> children) throws Exception {
-        // AWS S3 is eventually consistent so we retry for 10 minutes assuming a list operation will never take longer than that
-        // to become consistent.
-        assertBusy(() -> assertChildren_(path, children), 10L, TimeUnit.MINUTES);
-    }
-
-    protected void assertBlobsByPrefix_(BlobPath path, String prefix, Map<String, BlobMetaData> blobs) throws Exception {
-        final PlainActionFuture<Map<String, BlobMetaData>> future = PlainActionFuture.newFuture();
-        final BlobStoreRepository repository = getRepository();
-        repository.threadPool().generic().execute(new ActionRunnable<>(future) {
-            @Override
-            protected void doRun() throws Exception {
-                final BlobStore blobStore = repository.blobStore();
-                future.onResponse(blobStore.blobContainer(path).listBlobsByPrefix(prefix));
-            }
-        });
-        Map<String, BlobMetaData> foundBlobs = future.actionGet();
-        if (blobs.isEmpty()) {
-            assertThat(foundBlobs.keySet(), empty());
-        } else {
-            assertThat(foundBlobs.keySet(), containsInAnyOrder(blobs.keySet().toArray(Strings.EMPTY_ARRAY)));
-            for (Map.Entry<String, BlobMetaData> entry : foundBlobs.entrySet()) {
-                assertEquals(entry.getValue().length(), blobs.get(entry.getKey()).length());
-            }
-        }
-    }
-
-    protected void assertChildren_(BlobPath path, Collection<String> children) throws Exception {
-        final PlainActionFuture<Set<String>> future = PlainActionFuture.newFuture();
-        final BlobStoreRepository repository = getRepository();
-        repository.threadPool().generic().execute(new ActionRunnable<>(future) {
-            @Override
-            protected void doRun() throws Exception {
-                final BlobStore blobStore = repository.blobStore();
-                future.onResponse(blobStore.blobContainer(path).children().keySet());
-            }
-        });
-        Set<String> foundChildren = future.actionGet();
-        if (children.isEmpty()) {
-            assertThat(foundChildren, empty());
-        } else {
-            assertThat(foundChildren, containsInAnyOrder(children.toArray(Strings.EMPTY_ARRAY)));
-        }
-    }
-
-    private BlobStoreRepository getRepository() throws Exception {
-        RepositoriesService service = internalCluster().getInstance(RepositoriesService.class, internalCluster().getMasterName());
-        return (BlobStoreRepository) service.repository(REPOSITORY_NAME);
     }
 }
